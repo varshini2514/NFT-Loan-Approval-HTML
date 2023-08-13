@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample Loan Information</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        h5{
+            text-align: center;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .buttons-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .approve-btn, .reject-btn {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .approve-btn {
+            background-color: #5cb85c;
+            color: #fff;
+        }
+        .reject-btn {
+            background-color: #d9534f;
+            color: #f6f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Loan Information</h1>
+    <h5 id ="UserHeader"></h5>
+    <table id="loanTable">
+        <tr>
+            <th>Property Name</th>
+            <th>Transaction Id</th>
+            <th>Loan Amount</th>
+            <th>Property size (in Sqft)</th>
+            <th>Property Details</th>
+        </tr>
+    </table>
+    <div id="imageContainer" style="text-align: center; margin-top: 20px;">
+        <img id="propertyImage" src="" alt="Property Image" style="max-width: 50%; height: auto;">
+    </div>
+    <div class="buttons-container">
+        <button class="approve-btn" id="approveBtn">Approve Loan</button>
+        <button class="reject-btn" id="rejectBtn">Reject Loan</button>
+    </div>
+    <script>
+         axios.get('https://64c654d00a25021fde9186d7.mockapi.io/NFTProperty')
+            .then(response => {
+                const loanData = response.data[0]; // Assuming there's only one loan data in the response
+                const table = document.getElementById('loanTable');
+
+                // Add the fetched loan information to the table
+                const row = table.insertRow();
+                const PnameCell = row.insertCell(0);
+                const transactioncell = row.insertCell(1);
+                const Loanamtcell = row.insertCell(2);
+                const prosizeCell = row.insertCell(3);
+                const prodetailscell = row.insertCell(4);
+
+                PnameCell.textContent = loanData.Propertyname;
+                transactioncell.textContent = loanData.TransactionID;
+                Loanamtcell.textContent = '$' + loanData.Loanamt;
+                prosizeCell.textContent = loanData.Propertysize + ' months';
+                //prodetailscell.textContent = loanData.Propertydocurl;
+                const downloadLink = document.createElement("a");
+                downloadLink.textContent = "Download";
+                downloadLink.href = loanData.Propertydocurl;
+                downloadLink.download = "PropertyDocument.pdf"; // Change the file name and extension as needed
+                prodetailscell.appendChild(downloadLink);
+
+                const propertyImage = document.getElementById('propertyImage');
+                propertyImage.src = "https://www.rocketmortgage.com/resources-cmsassets/RocketMortgage.com/Article_Images/Large_Images/Types%20Of%20Homes/types-of-homes-hero.jpg";
+                const headtext = document.getElementById('UserHeader');
+                 headtext.textContent = `Loan Request from : ${loanData.Walletaddress}`
+            })
+            .catch(error => {
+                console.error('Error fetching loan data:', error);
+            });
+
+
+
+
+        document.getElementById("approveBtn").addEventListener("click", function() {
+            axios.get('https://64c654d00a25021fde9186d7.mockapi.io/NFTProperty')
+            .then(response => {
+                const Data = response.data[0];
+                const receivernumber = Data.Mobilenumber;
+            
+            // Replace with your actual Twilio account SID and auth token
+            const twilioAccountSid = "AC94dd12f6a929c2e95da9d7cc9a47cb55";
+            const twilioAuthToken = "198d424c8ba9a714e11c771803aa71e4";
+
+            const fromNumber = "+12187488405"; // Replace with your Twilio phone number
+            const toNumber = Data.Mobilenumber; // Replace with the destination phone number
+            const messageBody = `Greetings! Your loan request has been successfully approved. If you have any further questions or need assistance, please don't hesitate to ask\n Property Name : ${Data.Propertyname}\n Wallet Address : ${Data.Walletaddress}\n Loan id : 112233`;
+             console.log(receivernumber);
+            const apiUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+            const authToken = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+            // Set up the request payload
+            const data = new URLSearchParams();
+            data.append("From", fromNumber);
+            data.append("To", toNumber);
+            data.append("Body", messageBody);
+
+            // Send the POST request using fetch API
+            fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Authorization": "Basic " + authToken,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: data
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("Failed to send message.");
+                }
+            })
+            .then(data => {
+                // Handle the successful response here if needed
+                alert("Message sent successfully!");
+            })
+            .catch(error => {
+                // Handle errors here
+                alert(error.message);
+            });
+         })
+        });
+
+
+
+        document.getElementById("rejectBtn").addEventListener("click", function() {
+            axios.get('https://64c654d00a25021fde9186d7.mockapi.io/NFTProperty')
+            .then(response => {
+                const Data = response.data[0];
+                //const receivernumber = Data.Mobilenumber;
+            
+            // Replace with your actual Twilio account SID and auth token
+            const twilioAccountSid = "AC94dd12f6a929c2e95da9d7cc9a47cb55";
+            const twilioAuthToken = "c04a689da4ea6cb9bee9736cd3aa9bc2";
+
+            const fromNumber = "+12187488405"; // Replace with your Twilio phone number
+            const toNumber = Data.Mobilenumber; // Replace with the destination phone number
+            const messageBody = `Hello! I wanted to update you on your loan request. Regrettably, I need to inform you that your request for a loan has been denied. If you have any questions or need further clarification, please feel free to ask.`;
+
+            const apiUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+            const authToken = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+            // Set up the request payload
+            const data = new URLSearchParams();
+            data.append("From", fromNumber);
+            data.append("To", toNumber);
+            data.append("Body", messageBody);
+
+            // Send the POST request using fetch API
+            fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Authorization": "Basic " + authToken,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: data
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("Failed to send message.");
+                }
+            })
+            .then(data => {
+                // Handle the successful response here if needed
+                alert("Message sent successfully!");
+            })
+            .catch(error => {
+                // Handle errors here
+                alert(error.message);
+            });
+         })
+        });
+    </script>
+</body>
+</html>
